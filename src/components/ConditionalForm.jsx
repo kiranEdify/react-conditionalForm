@@ -1,61 +1,120 @@
+import { useEffect } from "react";
+import axios from "axios";
+
 import {
   Stack,
   Paper,
   TextField,
   Button,
   Checkbox,
+  Alert,
   FormControlLabel,
 } from "@mui/material";
 
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { userDataSchema } from "../validations/userDataSchema";
+import {
+  userDataSchema,
+  userDataSchema_setValue,
+} from "../validations/userDataSchema";
+import { useState } from "react";
 
 const ConditionalForm = () => {
+  const [isValidUser, setIsValidUser] = useState(false);
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+
   const {
     control,
     watch,
+    setValue,
+    reset,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(userDataSchema),
+    defaultValues: {
+      user: {
+        name: "",
+        age: "",
+        worked: true,
+        companyName: "",
+        yearsOfExp: "",
+      },
+    },
+    resolver: yupResolver(userDataSchema_setValue),
   });
-  console.log(watch("yearsOfExp"));
+
+  // console.log(watch("yearsOfExp"));
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:9000/users")
+      .then(({ data }) => setValue("user", data[0]))
+      .catch((error) => console.log(error));
+  }, []);
+
+  const submitHandler = (user) => {
+    // console.log(JSON.stringify(user));
+
+    axios
+      .post("http://localhost:9000/user", user)
+      .then((res) => setIsValidUser(true))
+      .catch(({ response }) => setIsValidUser(false));
+
+    setIsFormSubmitted(true);
+  };
+
+  // console.log(watch("user"));
+
   return (
     <>
+      {/* {console.log({ errors })} */}
+
       <Paper
         sx={{ width: "500px", margin: "10px auto", padding: "10px" }}
         elevation={3}
       >
-        <form onSubmit={handleSubmit((data, e) => console.log(e, data))}>
+        {isFormSubmitted ? (
+          isValidUser ? (
+            <Alert severity="success">User data submited successfully</Alert>
+          ) : (
+            <Alert severity="error">Enter valid data!</Alert>
+          )
+        ) : (
+          ""
+        )}
+
+        <form onSubmit={handleSubmit(submitHandler)}>
           <Stack spacing={2} sx={{ padding: "10px" }}>
             <Controller
               control={control}
-              name="name"
-              defaultValue=""
+              name="user.name"
+              // defaultValue=""
               render={({ field }) => (
                 <TextField
                   {...field}
                   variant="filled"
                   type="text"
                   label="Name"
-                  error={errors.name ? true : false}
-                  helperText={errors.name ? errors.name.message : ""}
+                  error={errors.user?.name ? true : false}
+                  helperText={
+                    errors.user?.name ? errors.user?.name.message : ""
+                  }
                 />
               )}
             />
             <Controller
               control={control}
-              name="age"
-              defaultValue=""
+              name="user.age"
+              // defaultValue=""
               render={({ field }) => (
                 <TextField
                   {...field}
                   variant="filled"
                   type="number"
                   label="Age"
-                  error={errors.name ? true : false}
-                  helperText={errors.age ? errors.age.message : ""}
+                  error={errors.user?.age ? true : false}
+                  helperText={errors.user?.age ? errors.user?.age.message : ""}
                 />
               )}
             />
@@ -70,7 +129,7 @@ const ConditionalForm = () => {
             }}
           >
             <Controller
-              name="worked"
+              name="user.worked"
               control={control}
               defaultValue={false}
               render={({ field }) => (
@@ -82,34 +141,38 @@ const ConditionalForm = () => {
             />
             <Controller
               control={control}
-              name="companyName"
-              defaultValue=""
+              name="user.companyName"
+              // defaultValue=""
               render={({ field }) => (
                 <TextField
                   {...field}
                   variant="filled"
                   type="text"
                   label="Comapny Name"
-                  error={errors.companyName ? true : false}
+                  error={errors.user?.companyName ? true : false}
                   helperText={
-                    errors.companyName ? errors.companyName.message : ""
+                    errors.user?.companyName
+                      ? errors.user?.companyName.message
+                      : ""
                   }
                 />
               )}
             />
             <Controller
               control={control}
-              name="yearsOfExp"
-              defaultValue=""
+              name="user.yearsOfExp"
+              // defaultValue=""
               render={({ field }) => (
                 <TextField
                   {...field}
                   variant="filled"
                   type="number"
                   label="Years of Experience"
-                  error={errors.yearsOfExp ? true : false}
+                  error={errors.user?.yearsOfExp ? true : false}
                   helperText={
-                    errors.yearsOfExp ? errors.yearsOfExp.message : ""
+                    errors.user?.yearsOfExp
+                      ? errors.user?.yearsOfExp.message
+                      : ""
                   }
                 />
               )}
